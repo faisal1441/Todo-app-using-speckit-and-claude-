@@ -1,0 +1,28 @@
+{
+  "name": "todo-app",
+  "version": "2.0.0",
+  "description": "Full-stack Todo Application with FastAPI backend and React frontend",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd backend && uvicorn api.main:app --reload --port 8000",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:backend": "echo 'Backend is Python, no build needed'",
+    "build:frontend": "cd frontend && npm run build",
+    "build": "npm run build:frontend",
+    "preview": "cd frontend && npm run preview",
+    "install-all": "cd backend && pip install -r requirements.txt && cd ../frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "todo",
+    "task-manager",
+    "fastapi",
+    "react",
+    "vite"
+  ],
+  "author": "Todo App Team",
+  "license": "MIT"
+}
