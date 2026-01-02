@@ -1,343 +1,456 @@
-# Python Todo Console Application
+# Todo App - Full Stack Web Application
 
-A beginner-friendly todo application built with Python that allows users to manage tasks through a simple command-line interface. Tasks are automatically saved to a JSON file for persistence across sessions.
+A modern, full-stack todo application with a FastAPI backend and React frontend. Manage your tasks efficiently with a clean, intuitive web interface. Deployed to Vercel for easy access anywhere.
 
 ## Features
 
-- **Add Tasks**: Create new tasks with titles and optional descriptions
+- **Create Tasks**: Add new tasks with titles and optional descriptions
 - **View Tasks**: Display all tasks with status, creation date, and completion information
-- **Update Tasks**: Modify task titles and descriptions
-- **Delete Tasks**: Remove tasks from the list with confirmation
-- **Mark Complete**: Track task progress by marking tasks as complete or incomplete
-- **File Persistence**: Tasks are automatically saved to `tasks.json` after each operation
+- **Update Tasks**: Modify task titles and descriptions inline
+- **Delete Tasks**: Remove tasks with confirmation
+- **Toggle Status**: Mark tasks as complete or incomplete
+- **Filter Tasks**: View all, pending, or completed tasks
+- **Statistics**: Track total, pending, and completed task counts
+- **Responsive Design**: Works on desktop, tablet, and mobile devices
+- **Data Persistence**: Tasks saved to JSON file (resets on Vercel cold start; migrate to database for production)
+
+## Technology Stack
+
+### Backend
+- **Framework**: FastAPI (Python)
+- **Server**: Uvicorn
+- **Validation**: Pydantic
+- **Persistence**: JSON file-based (with structured serialization)
+
+### Frontend
+- **Library**: React 18
+- **Build Tool**: Vite
+- **HTTP Client**: Axios
+- **Styling**: Custom CSS with responsive design
+
+### Deployment
+- **Platform**: Vercel
+- **Configuration**: Monorepo with separate builds for backend and frontend
+
+## Project Structure
+
+```
+todo-app/
+├── backend/                          # FastAPI backend
+│   ├── api/
+│   │   ├── main.py                  # FastAPI app entry point
+│   │   ├── routes/
+│   │   │   └── tasks.py             # Task API endpoints
+│   │   ├── schemas/
+│   │   │   └── task_schema.py       # Pydantic models
+│   │   └── middleware/
+│   │       └── error_handlers.py    # Error handling
+│   ├── core/
+│   │   ├── models/
+│   │   │   └── task.py              # Task data model
+│   │   └── services/
+│   │       ├── task_manager.py      # CRUD operations
+│   │       └── task_persistence.py  # JSON persistence
+│   ├── requirements.txt
+│   └── vercel.json
+│
+├── frontend/                         # React frontend
+│   ├── src/
+│   │   ├── App.jsx                  # Main app component
+│   │   ├── main.jsx                 # React entry point
+│   │   ├── components/
+│   │   │   ├── TaskList.jsx
+│   │   │   ├── TaskItem.jsx
+│   │   │   ├── TaskForm.jsx
+│   │   │   ├── TaskFilter.jsx
+│   │   │   └── TaskStats.jsx
+│   │   ├── services/
+│   │   │   └── api.js               # API client
+│   │   ├── hooks/
+│   │   │   └── useTasks.js          # Custom hook
+│   │   └── styles/
+│   │       └── App.css              # Global styles
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   ├── .env.example
+│   └── vercel.json
+│
+├── vercel.json                       # Root Vercel config
+├── package.json                      # Root package.json
+└── README.md                         # This file
+```
 
 ## Quick Start
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- No external dependencies required (uses Python standard library only)
+- **Node.js** 16+ (for frontend)
+- **Python** 3.9+ (for backend)
+- **npm** or **yarn** (for frontend package management)
 
-### Installation
+### Local Development Setup
 
-1. Clone or download the project:
+1. **Clone the repository**:
 ```bash
-cd Todoapp
+git clone <repository-url>
+cd todoapp
 ```
 
-2. Ensure the project structure is created:
+2. **Install dependencies**:
 ```bash
-# Already set up, but the structure should be:
-src/
-├── models/
-├── services/
-└── cli/
-tests/
-├── unit/
-└── integration/
+npm run install-all
 ```
 
-### Running the Application
+This will:
+- Install Python dependencies in `backend/requirements.txt`
+- Install Node dependencies in `frontend/package.json`
 
+3. **Run locally**:
+
+**Option A: Run frontend and backend separately**
+
+Terminal 1 - Start backend:
 ```bash
-python src/cli/main.py
+cd backend
+uvicorn api.main:app --reload --port 8000
 ```
 
-The application will start with a menu interface:
-
-```
-=====================================
-  TODO CONSOLE APPLICATION
-=====================================
-Choose an option:
-1. Add a new task
-2. View all tasks
-3. Update a task
-4. Delete a task
-5. Mark task complete/incomplete
-6. Exit application
--------------------------------------
-Enter your choice (1-6):
+Terminal 2 - Start frontend:
+```bash
+cd frontend
+npm run dev
 ```
 
-## Usage Guide
+The app will be available at `http://localhost:5173`
 
-### Adding a Task
-
-1. Select option 1 from the menu
-2. Enter the task title (required)
-3. Enter a description (optional, press Enter to skip)
-4. Task is created with a unique ID
-
-Example:
-```
---- Add New Task ---
-Enter task title: Buy groceries
-Enter description (optional, press Enter to skip): For Sunday dinner
-✓ Task added successfully! (ID: 1)
-```
-
-### Viewing Tasks
-
-1. Select option 2 from the menu
-2. All tasks are displayed with:
-   - Task ID and title
-   - Current status (pending/complete)
-   - Creation date and time
-   - Completion date/time (if completed)
-
-Example:
-```
---- All Tasks (2 total) ---
-[#1] Buy groceries
-    Status: pending
-    Created: 2026-01-01 10:00:00
-
-[#2] Cook dinner
-    Status: complete
-    Created: 2026-01-01 10:15:00
-    Completed: 2026-01-01 10:30:45
-
-Summary: 1 pending, 1 complete
-```
-
-### Updating a Task
-
-1. Select option 3 from the menu
-2. View current tasks
-3. Enter the task ID to update
-4. Enter new title (or press Enter to keep current)
-5. Enter new description (or press Enter to keep current)
-6. Task is updated successfully
-
-### Deleting a Task
-
-1. Select option 4 from the menu
-2. View current tasks
-3. Enter the task ID to delete
-4. Confirm deletion (yes/no prompt)
-5. Task is removed from the list
-
-### Marking Tasks Complete
-
-1. Select option 5 from the menu
-2. View current tasks
-3. Enter the task ID
-4. If pending: marks as complete (sets completion date)
-5. If complete: prompts to mark as incomplete
-
-## Project Structure
-
-```
-Todoapp/
-├── src/                          # Source code
-│   ├── __init__.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   └── task.py              # Task data model
-│   ├── services/
-│   │   ├── __init__.py
-│   │   └── task_manager.py      # Task storage and CRUD
-│   └── cli/
-│       ├── __init__.py
-│       └── main.py              # Command-line interface
-├── tests/                        # Test suite
-│   ├── unit/                    # Component tests
-│   │   ├── test_task.py
-│   │   └── test_task_manager.py
-│   └── integration/             # Workflow tests
-│       ├── test_add_task.py
-│       ├── test_view_tasks.py
-│       ├── test_update_task.py
-│       ├── test_delete_task.py
-│       ├── test_mark_complete.py
-│       └── test_complete_workflow.py
-├── specs/                        # Specification documents
-│   └── 1-todo-console-app/
-│       ├── spec.md              # Feature specification
-│       ├── plan.md              # Implementation plan
-│       ├── research.md          # Design decisions
-│       ├── data-model.md        # Data structure design
-│       ├── quickstart.md        # Implementation guide
-│       ├── tasks.md             # Task breakdown
-│       └── contracts/           # Component contracts
-├── README.md                     # This file
-└── .gitignore                    # Git ignore rules
-```
-
-## Architecture
-
-### Models Layer (src/models/)
-
-**Task Class**: Represents a single todo item with:
-- Unique ID (auto-assigned)
-- Title (required)
-- Description (optional)
-- Status (pending or complete)
-- Created timestamp
-- Completed timestamp (when marked complete)
-
-Methods:
-- `mark_complete()`: Change status to complete
-- `mark_incomplete()`: Change status to pending
-- `is_complete()`: Check if complete
-- `is_pending()`: Check if pending
-- `set_title()`: Update title
-- `set_description()`: Update description
-
-### Services Layer (src/services/)
-
-**TaskManager Class**: Manages in-memory task storage with:
-- CRUD operations (create, read, update, delete)
-- Query methods (get all, filter by status)
-- ID management (unique, never reused)
-- Data integrity validation
-
-Methods:
-- `add_task(title, description)`: Create new task
-- `get_task_by_id(id)`: Retrieve specific task
-- `update_task(id, title, description)`: Modify task
-- `delete_task(id)`: Remove task
-- `get_all_tasks()`: Get all tasks
-- `get_pending_tasks()`: Filter pending tasks
-- `get_completed_tasks()`: Filter completed tasks
-- `mark_task_complete(id)`: Mark as done
-- `mark_task_incomplete(id)`: Mark as pending
-
-### CLI Layer (src/cli/)
-
-**Main Module**: Provides user interface with:
-- Menu-driven navigation
-- Input validation
-- Error handling
-- User-friendly messages
-- Operation handlers for each feature
-
-## Running Tests
-
-### Run All Tests
+**Option B: Run both with concurrently**
 
 ```bash
-python -m unittest discover tests -v
+npm run dev
 ```
 
-### Run Unit Tests Only
+### Environment Variables
 
+Create `frontend/.env` based on `.env.example`:
+
+```
+VITE_API_URL=http://localhost:8000/api
+```
+
+For Vercel deployment, set environment variables in the Vercel dashboard:
+```
+VITE_API_URL=https://your-domain.vercel.app/api
+```
+
+## API Documentation
+
+### Base URL
+```
+http://localhost:8000/api
+```
+
+### Endpoints
+
+#### Get All Tasks
+```
+GET /api/tasks?status=pending|complete
+```
+Query Parameters:
+- `status` (optional): Filter by "pending" or "complete"
+
+Response: `[TaskResponse]`
+
+#### Create Task
+```
+POST /api/tasks
+Content-Type: application/json
+
+{
+  "title": "Buy groceries",
+  "description": "For Sunday dinner"
+}
+```
+
+Response: `TaskResponse`
+
+#### Get Task by ID
+```
+GET /api/tasks/{id}
+```
+
+Response: `TaskResponse`
+
+#### Update Task
+```
+PUT /api/tasks/{id}
+Content-Type: application/json
+
+{
+  "title": "New title",
+  "description": "New description"
+}
+```
+
+Response: `TaskResponse`
+
+#### Delete Task
+```
+DELETE /api/tasks/{id}
+```
+
+Response: `204 No Content`
+
+#### Mark Complete
+```
+PATCH /api/tasks/{id}/complete
+```
+
+Response: `TaskResponse`
+
+#### Mark Incomplete
+```
+PATCH /api/tasks/{id}/incomplete
+```
+
+Response: `TaskResponse`
+
+#### Get Statistics
+```
+GET /api/tasks/stats
+```
+
+Response:
+```json
+{
+  "total": 10,
+  "pending": 6,
+  "completed": 4
+}
+```
+
+#### Interactive API Documentation
+Visit `http://localhost:8000/docs` for interactive API documentation (Swagger UI)
+
+## Building for Production
+
+### Build Frontend
 ```bash
-python -m unittest discover tests/unit -v
+cd frontend
+npm run build
 ```
 
-### Run Integration Tests Only
+Output: `frontend/dist/`
 
+### Build Backend
+No build needed - Python is interpreted at runtime.
+
+### Deploy to Vercel
+
+1. **Push to GitHub**:
 ```bash
-python -m unittest discover tests/integration -v
+git add .
+git commit -m "Add web version"
+git push origin main
 ```
 
-### Run Specific Test File
+2. **Connect to Vercel**:
+   - Go to [vercel.com](https://vercel.com)
+   - Connect your GitHub repository
+   - Vercel will auto-detect the monorepo configuration
+   - Set environment variables in Vercel dashboard
+   - Deploy!
 
+3. **Verify Deployment**:
+   - Frontend available at your Vercel URL
+   - API available at `<your-url>/api`
+   - Interactive docs at `<your-url>/api/docs`
+
+## Development Workflow
+
+### Add a New Feature
+
+1. **Create a test or plan**:
 ```bash
-python -m unittest tests.unit.test_task -v
+# Backend: Create test in tests/
+# Frontend: Create in src/
 ```
 
-### Run Specific Test
+2. **Implement the feature**:
+   - Backend: Add route in `backend/api/routes/tasks.py`
+   - Frontend: Create component or update existing
 
+3. **Test locally**:
 ```bash
-python -m unittest tests.unit.test_task.TestTask.test_create_task_with_title -v
+npm run dev
+# Open http://localhost:5173
+# Test the feature
 ```
 
-## Error Handling
+4. **Commit and push**:
+```bash
+git add .
+git commit -m "feat: add feature description"
+git push origin feature-branch
+```
 
-The application handles various error cases gracefully:
+## Troubleshooting
 
-| Error | User Message | Recovery |
-|-------|--------------|----------|
-| Empty title | "Task title cannot be empty" | Prompt to enter valid title |
-| Non-existent task ID | "Task not found" | Show current tasks and retry |
-| Invalid menu choice | "Invalid choice. Please enter 1-6" | Reprompt for valid choice |
-| Non-numeric ID input | "Please enter a valid number" | Reprompt for numeric input |
+### Backend Issues
 
-## Data Integrity
+**Module not found errors**:
+```bash
+cd backend
+pip install -r requirements.txt
+```
 
-The application ensures:
-- **Unique IDs**: Every task has a unique ID, never reused
-- **Valid Status**: Tasks can only be "pending" or "complete"
-- **Timestamp Consistency**: Creation dates never change; completion dates only set when complete
-- **Fail-Fast Validation**: Invalid data is rejected at creation time
-- **No Orphans**: Deleted tasks completely removed; no dangling references
+**Port 8000 already in use**:
+```bash
+# Use a different port
+uvicorn api.main:app --reload --port 8001
+# Update frontend API URL to match
+```
+
+### Frontend Issues
+
+**Node modules issues**:
+```bash
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**API connection errors**:
+- Check that backend is running on `http://localhost:8000`
+- Check `VITE_API_URL` in `.env`
+- Check browser console for CORS errors
+
+### Vercel Deployment
+
+**502 Bad Gateway**:
+- Check that `backend/api/main.py` exports `app`
+- Verify `vercel.json` configuration
+- Check Vercel build logs
+
+**Frontend shows 404**:
+- Check that `frontend/dist` is built
+- Verify `vercel.json` routes configuration
+
+**API returns 404**:
+- Make sure tasks are using `/api/` prefix
+- Check `VITE_API_URL` environment variable in Vercel dashboard
 
 ## Data Persistence
 
-Tasks are automatically saved to `tasks.json` in the project directory after each operation:
+### Current Implementation
+- Tasks stored in `/tmp/tasks.json` (local) or `/tmp/tasks.json` on Vercel
+- **Important**: Data resets on Vercel cold starts
 
-- **Auto-Save**: Changes are saved immediately after add, update, delete, or mark complete
-- **File Format**: Human-readable JSON with clear structure
-- **Error Recovery**: Corrupted files are backed up and a fresh file is created
-- **Optional**: Application can run in pure in-memory mode (no file I/O)
+### Migrate to Database (Future)
+For production with permanent storage:
 
-### Backup and Recovery
+1. **Option A: Vercel PostgreSQL**
+   - Use Vercel Postgres for managed PostgreSQL
+   - Replace `TaskFileManager` with database queries
 
-If `tasks.json` becomes corrupted, the application will:
-1. Create a backup file named `tasks.json.corrupt.TIMESTAMP`
-2. Start fresh with an empty task list
-3. Display a warning message
+2. **Option B: Supabase**
+   - Supabase for PostgreSQL with built-in auth
+   - Update `TaskManager` to use Supabase client
 
-## Known Limitations
+3. **Option C: MongoDB Atlas**
+   - MongoDB Atlas for document storage
+   - Use pymongo driver
 
-- **Single User**: Not designed for multi-user or concurrent access
-- **No Networking**: Console-based, local execution only
-- **Console UI Only**: Text-based interface, no graphical UI
-- **No Authentication**: No user login or security features
+## Performance Considerations
 
-## Implementation Notes
+### Backend
+- TaskManager uses in-memory list for O(n) lookups
+- For 1000+ tasks, consider database indexing
+- JSON persistence is atomic (crash-safe writes)
 
-### For Developers
+### Frontend
+- Vite for optimized builds
+- React.memo for component optimization
+- Lazy loading with React.lazy() for future routes
 
-- **Language**: Python 3.8+
-- **Testing**: unittest (standard library)
-- **Code Style**: PEP 8 compliant
-- **Documentation**: Docstrings for all public classes and methods
+### Deployment
+- Vercel serverless functions (cold start ~3-5s)
+- Frontend cached via Vercel CDN
+- API calls use axios with 10s timeout
 
-### Development Workflow
+## Testing
 
-1. Write tests first (TDD approach)
-2. Implement feature to pass tests
-3. Refactor for clarity
-4. Document any non-obvious behavior
-5. Run full test suite before committing
+### Backend Unit Tests
+```bash
+cd backend
+python -m pytest tests/unit -v
+```
 
-### Code Quality
+### Backend Integration Tests
+```bash
+cd backend
+python -m pytest tests/integration -v
+```
 
-- All code is beginner-friendly and well-commented
-- Each component has a single responsibility
-- No circular dependencies
-- Comprehensive error handling
-- Extensive test coverage
-
-## Future Enhancements (Phase II+)
-
-Potential improvements for future versions:
-
-- **Database Integration**: Use SQLite or PostgreSQL for advanced persistence
-- **Enhanced CLI**: Color output, better formatting, progress indicators
-- **Tags/Categories**: Organize tasks by tags or projects
-- **Due Dates**: Add task deadlines and reminders
-- **Priority Levels**: Task priority indicators
-- **Search/Filter**: Find tasks by keyword or criteria
-- **Undo/Redo**: Revert recent changes
-- **Web Interface**: Browser-based UI
-- **Multi-User**: Shared task lists with user accounts
-- **CSV Export**: Export tasks to spreadsheet format
-- **Cloud Sync**: Synchronize tasks across devices
+### Frontend Testing (optional)
+```bash
+cd frontend
+npm test
+```
 
 ## Contributing
 
-To contribute to this project:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-1. Follow the specification in `specs/1-todo-console-app/spec.md`
-2. Write tests before implementing features
-3. Ensure all tests pass
-4. Follow PEP 8 code style
-5. Document your changes
+## Future Enhancements
+
+- **Database Integration**: Migrate to PostgreSQL/Supabase for permanent storage
+- **User Authentication**: Add login/signup with JWT
+- **Categories/Tags**: Organize tasks by categories
+- **Due Dates**: Add task deadlines and reminders
+- **Priority Levels**: Mark tasks with different priorities
+- **Search/Filter**: Advanced search and filtering
+- **Undo/Redo**: Revert recent changes
+- **Dark Mode**: Add dark theme toggle
+- **Mobile App**: React Native version
+- **Real-time Sync**: WebSocket for live updates
+
+## Known Limitations
+
+- **Single User**: No multi-user support
+- **Temporary Storage**: Vercel cold starts reset data (use database for production)
+- **No Authentication**: All tasks are public
+- **Concurrent Access**: Limited to single instance (database needed for scaling)
+
+## Architecture Decisions
+
+### Why FastAPI?
+- Async support for better performance
+- Built-in API documentation (Swagger UI)
+- Pydantic for automatic request validation
+- Easy deployment to Vercel serverless
+
+### Why React + Vite?
+- Modern component-based UI
+- Hot module replacement for fast development
+- Small bundle size with Vite
+- Large ecosystem and community support
+
+### Why Monorepo?
+- Single deployment to Vercel
+- Shared dependencies and testing
+- Easier deployment workflow
+- Clear separation of concerns
+
+### Why JSON Persistence?
+- No database setup required
+- Simple for MVP
+- Easy to migrate to database later
+- Atomic writes prevent corruption
 
 ## License
 
@@ -347,30 +460,33 @@ This project is provided as-is for educational purposes.
 
 For issues, questions, or suggestions:
 
-1. Check the specification: `specs/1-todo-console-app/spec.md`
-2. Review the implementation plan: `specs/1-todo-console-app/plan.md`
-3. Consult the quickstart guide: `specs/1-todo-console-app/quickstart.md`
+1. Check the API documentation at `/api/docs`
+2. Review error messages in browser console and terminal
+3. Check Vercel deployment logs
+4. Open an issue on GitHub
 
 ## Changelog
 
-### Version 1.1.0 (Current)
+### Version 2.0.0 (Current - Web Version)
+- **NEW**: Full-stack web application with React frontend
+- **NEW**: FastAPI backend with RESTful API
+- **NEW**: Responsive web UI with modern styling
+- **NEW**: Vercel deployment support
+- **IMPROVED**: Better data validation with Pydantic
+- **IMPROVED**: Structured JSON file persistence
+- **IMPROVED**: API documentation with Swagger UI
+- Backward compatible: existing CLI still available in `src/cli/`
 
-- **NEW**: File persistence - tasks automatically saved to `tasks.json`
-- **NEW**: 86 new tests for persistence layer (serialization, file I/O, workflows)
-- Improved error recovery (backup corrupt files, graceful fallbacks)
-- Updated CLI messages to reflect persistence
-- Total test coverage: 225 tests (139 existing + 86 new)
-- Backward compatible: in-memory mode still available
+### Version 1.1.0
+- Added file persistence with JSON storage
+- 86 new tests for persistence layer
+- Error recovery with corrupt file backup
 
 ### Version 1.0.0
-
-- Initial release
-- Implements 5 core features (Add, View, Update, Delete, Mark Complete)
-- In-memory storage
-- Console-based UI
-- Comprehensive test coverage (139 tests)
-- Full specification and documentation
+- Initial release with CLI interface
+- In-memory task storage
+- 139 comprehensive tests
 
 ---
 
-**Happy task managing!** 🚀
+**Happy task managing!** 🚀 [Deploy to Vercel](https://vercel.com/new)
