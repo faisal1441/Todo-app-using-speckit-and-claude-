@@ -9,11 +9,8 @@
       }
     },
     {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "frontend/dist"
-      }
+      "src": "nextjs-app/package.json",
+      "use": "@vercel/next"
     }
   ],
   "routes": [
@@ -23,10 +20,10 @@
     },
     {
       "src": "/(.*)",
-      "dest": "frontend/dist/$1"
+      "dest": "nextjs-app/$1"
     }
   ],
   "env": {
-    "VITE_API_URL": "@vite-api-url"
+    "NEXT_PUBLIC_API_URL": "@next-public-api-url"
   }
 }

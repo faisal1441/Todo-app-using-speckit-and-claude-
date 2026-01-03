@@ -1,7 +1,7 @@
 """
 Task API endpoints.
 
-This module defines all API routes for task operations:
+This module defines all API routes for task operations using SQLModel and PostgreSQL with asyncpg:
 - GET /api/tasks - List all tasks (with optional status filter)
 - POST /api/tasks - Create new task
 - GET /api/tasks/{id} - Get task by ID
@@ -12,13 +12,14 @@ This module defines all API routes for task operations:
 - GET /api/tasks/stats - Get task statistics
 """
 
-import os
-import tempfile
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import Optional
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select, func
 
-from backend.core.services.task_manager import TaskManager
-from backend.api.schemas.task_schema import (
+from ...core.models.task import Task
+from ...core.config import get_session
+from ...api.schemas.task_schema import (
     TaskCreate,
     TaskUpdate,
     TaskResponse,
@@ -28,45 +29,16 @@ from backend.api.schemas.task_schema import (
 # Create router
 router = APIRouter(tags=["tasks"])
 
-# Initialize TaskManager with persistence
-# Use system temp directory for cross-platform compatibility
-# (will reset on Vercel cold starts, but works locally)
-temp_dir = tempfile.gettempdir()
-persistence_file = os.path.join(temp_dir, "tasks.json")
-manager = TaskManager(persistence_file=persistence_file)
-
-
-# ============================================================================
-# Utility function to convert Task to Pydantic model
-# ============================================================================
-
-def task_to_response(task) -> TaskResponse:
-    """Convert Task object to TaskResponse Pydantic model."""
-    return TaskResponse.model_validate(task, from_attributes=True)
-
-
-# ============================================================================
-# Error handlers
-# ============================================================================
-
-def handle_errors(func):
-    """Decorator to handle common errors."""
-    async def wrapper(*args, **kwargs):
-        try:
-            return await func(*args, **kwargs)
-        except KeyError as e:
-            raise HTTPException(status_code=404, detail=str(e))
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
-    return wrapper
-
 
 # ============================================================================
 # API Endpoints
 # ============================================================================
 
 @router.get("/tasks", response_model=list[TaskResponse])
-async def get_all_tasks(status: Optional[str] = Query(None, pattern="^(pending|complete)$")):
+async def get_all_tasks(
+    status: Optional[str] = Query(None, pattern="^(pending|complete)$"),
+    session: AsyncSession = Depends(get_session)
+):
     """
     Get all tasks, optionally filtered by status.
 
@@ -77,20 +49,20 @@ async def get_all_tasks(status: Optional[str] = Query(None, pattern="^(pending|c
         List of TaskResponse objects
     """
     try:
-        if status == "pending":
-            tasks = manager.get_pending_tasks()
-        elif status == "complete":
-            tasks = manager.get_completed_tasks()
-        else:
-            tasks = manager.get_all_tasks()
+        statement = select(Task).order_by(Task.created_at.desc())
 
-        return [task_to_response(task) for task in tasks]
+        if status:
+            statement = statement.where(Task.status == status)
+
+        result = await session.execute(statement)
+        tasks = result.scalars().all()
+        return [TaskResponse.model_validate(task, from_attributes=True) for task in tasks]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving tasks: {str(e)}")
 
 
 @router.post("/tasks", response_model=TaskResponse, status_code=201)
-async def create_task(task_data: TaskCreate):
+async def create_task(task_data: TaskCreate, session: AsyncSession = Depends(get_session)):
     """
     Create a new task.
 
@@ -102,16 +74,23 @@ async def create_task(task_data: TaskCreate):
         Created TaskResponse object
     """
     try:
-        task = manager.add_task(task_data.title, task_data.description)
-        return task_to_response(task)
+        if not task_data.title or not task_data.title.strip():
+            raise ValueError("Task title cannot be empty")
+
+        task = Task(title=task_data.title, description=task_data.description)
+        session.add(task)
+        await session.commit()
+        await session.refresh(task)
+        return TaskResponse.model_validate(task, from_attributes=True)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
+        await session.rollback()
         raise HTTPException(status_code=500, detail=f"Error creating task: {str(e)}")
 
 
 @router.get("/tasks/stats", response_model=TaskStats)
-async def get_stats():
+async def get_stats(session: AsyncSession = Depends(get_session)):
     """
     Get task statistics.
 
@@ -119,17 +98,29 @@ async def get_stats():
         TaskStats object with total, pending, and completed counts
     """
     try:
-        return TaskStats(
-            total=manager.count_tasks(),
-            pending=manager.count_pending(),
-            completed=manager.count_completed()
+        # Get total count
+        total_result = await session.execute(select(func.count(Task.id)))
+        total = total_result.scalar() or 0
+
+        # Get pending count
+        pending_result = await session.execute(
+            select(func.count(Task.id)).where(Task.status == "pending")
         )
+        pending = pending_result.scalar() or 0
+
+        # Get completed count
+        completed_result = await session.execute(
+            select(func.count(Task.id)).where(Task.status == "complete")
+        )
+        completed = completed_result.scalar() or 0
+
+        return TaskStats(total=total, pending=pending, completed=completed)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving stats: {str(e)}")
 
 
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
-async def get_task(task_id: int):
+async def get_task(task_id: int, session: AsyncSession = Depends(get_session)):
     """
     Get a specific task by ID.
 
@@ -143,16 +134,20 @@ async def get_task(task_id: int):
         404: If task not found
     """
     try:
-        task = manager.get_task_by_id(task_id)
-        return task_to_response(task)
-    except KeyError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        task = await session.get(Task, task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
+        return TaskResponse.model_validate(task, from_attributes=True)
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving task: {str(e)}")
 
 
 @router.put("/tasks/{task_id}", response_model=TaskResponse)
-async def update_task(task_id: int, task_data: TaskUpdate):
+async def update_task(
+    task_id: int, task_data: TaskUpdate, session: AsyncSession = Depends(get_session)
+):
     """
     Update a task's title and/or description.
 
@@ -171,22 +166,34 @@ async def update_task(task_id: int, task_data: TaskUpdate):
         400: If title is invalid
     """
     try:
-        task = manager.update_task(
-            task_id,
-            title=task_data.title,
-            description=task_data.description
-        )
-        return task_to_response(task)
-    except KeyError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        task = await session.get(Task, task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
+
+        if task_data.title is not None:
+            if not task_data.title.strip():
+                raise ValueError("Task title cannot be empty")
+            task.title = task_data.title
+
+        if task_data.description is not None:
+            task.description = task_data.description
+
+        session.add(task)
+        await session.commit()
+        await session.refresh(task)
+        return TaskResponse.model_validate(task, from_attributes=True)
     except ValueError as e:
+        await session.rollback()
         raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
+        await session.rollback()
         raise HTTPException(status_code=500, detail=f"Error updating task: {str(e)}")
 
 
 @router.delete("/tasks/{task_id}", status_code=204)
-async def delete_task(task_id: int):
+async def delete_task(task_id: int, session: AsyncSession = Depends(get_session)):
     """
     Delete a task.
 
@@ -197,16 +204,22 @@ async def delete_task(task_id: int):
         404: If task not found
     """
     try:
-        manager.delete_task(task_id)
+        task = await session.get(Task, task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
+
+        session.delete(task)
+        await session.commit()
         return None
-    except KeyError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    except HTTPException:
+        raise
     except Exception as e:
+        await session.rollback()
         raise HTTPException(status_code=500, detail=f"Error deleting task: {str(e)}")
 
 
 @router.patch("/tasks/{task_id}/complete", response_model=TaskResponse)
-async def mark_complete(task_id: int):
+async def mark_complete(task_id: int, session: AsyncSession = Depends(get_session)):
     """
     Mark a task as complete.
 
@@ -220,16 +233,24 @@ async def mark_complete(task_id: int):
         404: If task not found
     """
     try:
-        task = manager.mark_task_complete(task_id)
-        return task_to_response(task)
-    except KeyError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        task = await session.get(Task, task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
+
+        task.mark_complete()
+        session.add(task)
+        await session.commit()
+        await session.refresh(task)
+        return TaskResponse.model_validate(task, from_attributes=True)
+    except HTTPException:
+        raise
     except Exception as e:
+        await session.rollback()
         raise HTTPException(status_code=500, detail=f"Error marking task complete: {str(e)}")
 
 
 @router.patch("/tasks/{task_id}/incomplete", response_model=TaskResponse)
-async def mark_incomplete(task_id: int):
+async def mark_incomplete(task_id: int, session: AsyncSession = Depends(get_session)):
     """
     Mark a task as incomplete.
 
@@ -243,11 +264,17 @@ async def mark_incomplete(task_id: int):
         404: If task not found
     """
     try:
-        task = manager.mark_task_incomplete(task_id)
-        return task_to_response(task)
-    except KeyError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        task = await session.get(Task, task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail=f"Task with ID {task_id} not found")
+
+        task.mark_incomplete()
+        session.add(task)
+        await session.commit()
+        await session.refresh(task)
+        return TaskResponse.model_validate(task, from_attributes=True)
+    except HTTPException:
+        raise
     except Exception as e:
+        await session.rollback()
         raise HTTPException(status_code=500, detail=f"Error marking task incomplete: {str(e)}")
-
-

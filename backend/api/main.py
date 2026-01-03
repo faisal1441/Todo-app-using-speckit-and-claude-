@@ -8,8 +8,10 @@ It configures middleware, routes, and CORS for the application.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+import asyncio
 
-from backend.api.routes import tasks
+from .routes import tasks
+from ..core.config import async_init_db
 
 # Create FastAPI app
 app = FastAPI(
@@ -23,22 +25,27 @@ app = FastAPI(
 # ============================================================================
 
 # Configure CORS to allow frontend to make requests
+import os
 origins = [
-    "http://localhost:5173",  # Vite dev server
-    "http://localhost:3000",  # Alternative dev port
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000",
+    "http://localhost:5173",   # Vite dev server
+    "http://localhost:3000",   # Next.js dev server
+    "http://localhost:8000",   # Backend dev server (for testing)
+    "http://127.0.0.1:5173",   # Localhost IPv4 (Vite)
+    "http://127.0.0.1:3000",   # Localhost IPv4 (Next.js)
+    "http://127.0.0.1:8000",   # Localhost IPv4 (Backend)
 ]
 
-# Add production domain when deployed to Vercel
+# Add production domains when deployed to Vercel
 # Environment variable: VERCEL_URL or specific domain
-import os
 vercel_url = os.getenv("VERCEL_URL")
 if vercel_url:
     origins.append(f"https://{vercel_url}")
     # Also add www version
     if not vercel_url.startswith("www."):
         origins.append(f"https://www.{vercel_url}")
+    # Add with .com extension if it's a custom domain
+    if not vercel_url.endswith(".com"):
+        origins.append(f"https://{vercel_url}.com")
 
 app.add_middleware(
     CORSMiddleware,
@@ -115,6 +122,12 @@ async def key_error_handler(request, exc):
 async def startup_event():
     """Handle application startup."""
     print("Todo API server starting up...")
+    try:
+        await async_init_db()
+        print("[OK] Database initialized successfully")
+    except Exception as e:
+        print(f"[ERROR] Failed to initialize database: {e}")
+        raise
 
 
 @app.on_event("shutdown")
