@@ -29,9 +29,11 @@ import os
 origins = [
     "http://localhost:5173",   # Vite dev server
     "http://localhost:3000",   # Next.js dev server
+    "http://localhost:3001",   # Next.js dev server (alternate port)
     "http://localhost:8000",   # Backend dev server (for testing)
     "http://127.0.0.1:5173",   # Localhost IPv4 (Vite)
     "http://127.0.0.1:3000",   # Localhost IPv4 (Next.js)
+    "http://127.0.0.1:3001",   # Localhost IPv4 (Next.js - alternate port)
     "http://127.0.0.1:8000",   # Localhost IPv4 (Backend)
 ]
 

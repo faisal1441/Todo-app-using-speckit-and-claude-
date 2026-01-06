@@ -34,6 +34,36 @@ router = APIRouter(tags=["tasks"])
 # API Endpoints
 # ============================================================================
 
+@router.get("/tasks/stats", response_model=TaskStats)
+async def get_stats(session: AsyncSession = Depends(get_session)):
+    """
+    Get task statistics.
+
+    Returns:
+        TaskStats object with total, pending, and completed counts
+    """
+    try:
+        # Get total count
+        total_result = await session.execute(select(func.count(Task.id)))
+        total = total_result.scalar() or 0
+
+        # Get pending count
+        pending_result = await session.execute(
+            select(func.count(Task.id)).where(Task.status == "pending")
+        )
+        pending = pending_result.scalar() or 0
+
+        # Get completed count
+        completed_result = await session.execute(
+            select(func.count(Task.id)).where(Task.status == "complete")
+        )
+        completed = completed_result.scalar() or 0
+
+        return TaskStats(total=total, pending=pending, completed=completed)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving stats: {str(e)}")
+
+
 @router.get("/tasks", response_model=list[TaskResponse])
 async def get_all_tasks(
     status: Optional[str] = Query(None, pattern="^(pending|complete)$"),
@@ -87,36 +117,6 @@ async def create_task(task_data: TaskCreate, session: AsyncSession = Depends(get
     except Exception as e:
         await session.rollback()
         raise HTTPException(status_code=500, detail=f"Error creating task: {str(e)}")
-
-
-@router.get("/tasks/stats", response_model=TaskStats)
-async def get_stats(session: AsyncSession = Depends(get_session)):
-    """
-    Get task statistics.
-
-    Returns:
-        TaskStats object with total, pending, and completed counts
-    """
-    try:
-        # Get total count
-        total_result = await session.execute(select(func.count(Task.id)))
-        total = total_result.scalar() or 0
-
-        # Get pending count
-        pending_result = await session.execute(
-            select(func.count(Task.id)).where(Task.status == "pending")
-        )
-        pending = pending_result.scalar() or 0
-
-        # Get completed count
-        completed_result = await session.execute(
-            select(func.count(Task.id)).where(Task.status == "complete")
-        )
-        completed = completed_result.scalar() or 0
-
-        return TaskStats(total=total, pending=pending, completed=completed)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving stats: {str(e)}")
 
 
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
