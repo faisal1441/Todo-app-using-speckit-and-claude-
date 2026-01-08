@@ -128,8 +128,8 @@ async def startup_event():
         await async_init_db()
         print("[OK] Database initialized successfully")
     except Exception as e:
-        print(f"[ERROR] Failed to initialize database: {e}")
-        raise
+        print(f"[WARNING] Failed to initialize database: {e}")
+        print("[INFO] Application will continue, database operations may fail")
 
 
 @app.on_event("shutdown")

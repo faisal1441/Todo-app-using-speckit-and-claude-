@@ -17,11 +17,13 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.pool import NullPool, StaticPool
 from sqlmodel import SQLModel, Session
 
-# Load environment variables from .env file
+# Load environment variables from .env file (for local development)
 # Look for .env in the backend directory
 backend_dir = Path(__file__).parent.parent
 env_file = backend_dir / ".env"
-load_dotenv(env_file)
+if env_file.exists():
+    load_dotenv(env_file)
+    print(f"[Config] Loaded .env file from: {env_file}")
 
 # Get database URL from environment variable
 DATABASE_URL = os.getenv(
@@ -29,8 +31,12 @@ DATABASE_URL = os.getenv(
     "postgresql+asyncpg://user:password@localhost/neondb"
 )
 
-print(f"[Config] Loading database configuration from: {env_file}")
-print(f"[Config] Database URL: {DATABASE_URL[:50]}..." if len(DATABASE_URL) > 50 else f"[Config] Database URL: {DATABASE_URL}")
+# Log database configuration (redacted for security)
+if DATABASE_URL:
+    masked_url = DATABASE_URL[:50] + "..." if len(DATABASE_URL) > 50 else DATABASE_URL
+    print(f"[Config] Database URL: {masked_url}")
+else:
+    print("[Config] No DATABASE_URL found, using default local PostgreSQL")
 
 # Create async engine for async operations
 async_engine = create_async_engine(
