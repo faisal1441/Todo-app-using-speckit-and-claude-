@@ -78,9 +78,20 @@ async def root():
     return {
         "message": "Todo API v2.0",
         "version": "2.0.0",
-        "docs": "/docs",
-        "openapi": "/openapi.json"
+        "docs": "/api/docs",
+        "openapi": "/api/openapi.json"
     }
+
+
+@app.get("/test")
+async def test():
+    """
+    Test endpoint to verify the API is working.
+
+    Returns:
+        Simple JSON response
+    """
+    return {"status": "ok", "message": "API is working!"}
 
 
 @app.get("/health")
