@@ -117,24 +117,9 @@ async def key_error_handler(request, exc):
 
 
 # ============================================================================
-# Application Events
+# Application Events (Disabled for Vercel Serverless)
 # ============================================================================
 
-@app.on_event("startup")
-async def startup_event():
-    """Handle application startup."""
-    print("Todo API server starting up...")
-    print("[INFO] Initializing database...")
-    try:
-        await async_init_db()
-        print("[OK] Database initialized successfully")
-    except Exception as e:
-        print(f"[WARNING] Database initialization failed (non-blocking): {str(e)}")
-        # Don't raise - let the app start anyway for Vercel serverless
-        pass
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Handle application shutdown."""
-    print("Todo API server shutting down...")
+# NOTE: Startup/shutdown events are disabled for serverless compatibility
+# Database initialization will happen on first request instead
+# See routes.py for lazy initialization pattern
