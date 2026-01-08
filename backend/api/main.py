@@ -26,36 +26,44 @@ app = FastAPI(
 
 # Configure CORS to allow frontend to make requests
 import os
-origins = [
-    "http://localhost:5173",   # Vite dev server
-    "http://localhost:3000",   # Next.js dev server
-    "http://localhost:3001",   # Next.js dev server (alternate port)
-    "http://localhost:8000",   # Backend dev server (for testing)
-    "http://127.0.0.1:5173",   # Localhost IPv4 (Vite)
-    "http://127.0.0.1:3000",   # Localhost IPv4 (Next.js)
-    "http://127.0.0.1:3001",   # Localhost IPv4 (Next.js - alternate port)
-    "http://127.0.0.1:8000",   # Localhost IPv4 (Backend)
-]
+try:
+    origins = [
+        "http://localhost:5173",   # Vite dev server
+        "http://localhost:3000",   # Next.js dev server
+        "http://localhost:3001",   # Next.js dev server (alternate port)
+        "http://localhost:8000",   # Backend dev server (for testing)
+        "http://127.0.0.1:5173",   # Localhost IPv4 (Vite)
+        "http://127.0.0.1:3000",   # Localhost IPv4 (Next.js)
+        "http://127.0.0.1:3001",   # Localhost IPv4 (Next.js - alternate port)
+        "http://127.0.0.1:8000",   # Localhost IPv4 (Backend)
+    ]
 
-# Add production domains when deployed to Vercel
-# Environment variable: VERCEL_URL or specific domain
-vercel_url = os.getenv("VERCEL_URL")
-if vercel_url:
-    origins.append(f"https://{vercel_url}")
-    # Also add www version
-    if not vercel_url.startswith("www."):
-        origins.append(f"https://www.{vercel_url}")
-    # Add with .com extension if it's a custom domain
-    if not vercel_url.endswith(".com"):
-        origins.append(f"https://{vercel_url}.com")
+    # Add production domains when deployed to Vercel
+    # Environment variable: VERCEL_URL or specific domain
+    vercel_url = os.getenv("VERCEL_URL")
+    if vercel_url:
+        origins.append(f"https://{vercel_url}")
+        origins.append(f"https://*.{vercel_url}")
+        # Also add www version
+        if not vercel_url.startswith("www."):
+            origins.append(f"https://www.{vercel_url}")
+        # Add with .com extension if it's a custom domain
+        if not vercel_url.endswith(".com"):
+            origins.append(f"https://{vercel_url}.com")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    # Allow all origins as a fallback for development
+    origins.append("*")
+
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    print("[CORS] CORS middleware configured successfully")
+except Exception as e:
+    print(f"[CORS] WARNING: Failed to configure CORS: {e}")
 
 # ============================================================================
 # Include Routers
