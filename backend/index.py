@@ -2,13 +2,27 @@
 Vercel entry point for FastAPI application.
 
 This is the standard entry point that Vercel looks for when deploying Python applications.
-Vercel automatically runs this file as the serverless function handler.
+Vercel automatically wraps this ASGI app with its runtime handler.
 """
 
-from api.main import app
+import sys
+import os
 
-# Export the FastAPI app instance for Vercel
-# Vercel will wrap this with its runtime handler
+# Ensure we can import from the backend package
+sys.path.insert(0, os.path.dirname(__file__))
+
+try:
+    print("[index.py] Attempting to import FastAPI app...")
+    from api.main import app
+    print("[index.py] SUCCESS: FastAPI app imported successfully")
+except ImportError as e:
+    print(f"[index.py] IMPORT ERROR: {e}")
+    raise
+except Exception as e:
+    print(f"[index.py] UNEXPECTED ERROR during import: {e}")
+    import traceback
+    traceback.print_exc()
+    raise
+
+# Export the FastAPI ASGI app for Vercel
 __all__ = ["app"]
-
-# For Vercel Python runtime, the app instance is directly used
