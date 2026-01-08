@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/wsgi.py",
+      "src": "backend/index.py",
       "use": "@vercel/python",
       "config": {
         "pythonVersion": "3.11"
@@ -16,7 +16,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "backend/wsgi.py"
+      "dest": "backend/index.py"
     },
     {
       "src": "/(.*)",
