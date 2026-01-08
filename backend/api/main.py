@@ -124,12 +124,14 @@ async def key_error_handler(request, exc):
 async def startup_event():
     """Handle application startup."""
     print("Todo API server starting up...")
+    print("[INFO] Initializing database...")
     try:
         await async_init_db()
         print("[OK] Database initialized successfully")
     except Exception as e:
-        print(f"[WARNING] Failed to initialize database: {e}")
-        print("[INFO] Application will continue, database operations may fail")
+        print(f"[WARNING] Database initialization failed (non-blocking): {str(e)}")
+        # Don't raise - let the app start anyway for Vercel serverless
+        pass
 
 
 @app.on_event("shutdown")
