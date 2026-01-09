@@ -51,6 +51,12 @@ try:
         if not vercel_url.endswith(".com"):
             origins.append(f"https://{vercel_url}.com")
 
+    # Add Railway domain if available
+    railway_domain = os.getenv("RAILWAY_PUBLIC_DOMAIN")
+    if railway_domain:
+        origins.append(f"https://{railway_domain}")
+        print(f"[CORS] Added Railway domain: https://{railway_domain}")
+
     # Allow all origins as a fallback for development
     origins.append("*")
 
