@@ -2,15 +2,15 @@
   "version": 2,
   "builds": [
     {
+      "src": "nextjs-app/package.json",
+      "use": "@vercel/next"
+    },
+    {
       "src": "handler.py",
       "use": "@vercel/python",
       "config": {
         "pythonVersion": "3.11"
       }
-    },
-    {
-      "src": "nextjs-app/package.json",
-      "use": "@vercel/next"
     }
   ],
   "routes": [
