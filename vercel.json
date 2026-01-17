@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/index.py",
+      "src": "handler.py",
       "use": "@vercel/python",
       "config": {
         "pythonVersion": "3.11"
@@ -16,7 +16,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "backend/index.py"
+      "dest": "handler.py"
     },
     {
       "src": "/(.*)",
@@ -27,3 +27,5 @@
     "NEXT_PUBLIC_API_URL": "/api"
   }
 }
+
+
