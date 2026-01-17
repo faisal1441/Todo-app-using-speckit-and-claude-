@@ -21,8 +21,8 @@ Example:
 
 from typing import Optional
 
-from backend.core.models.task import Task
-from backend.core.services.task_persistence import TaskFileManager
+from ..models.task import Task
+from .task_persistence import TaskFileManager
 
 
 class TaskManager:

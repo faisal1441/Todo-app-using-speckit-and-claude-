@@ -13,7 +13,7 @@ import shutil
 from datetime import datetime
 from typing import Optional, Tuple, List
 
-from backend.core.models.task import Task
+from ..models.task import Task
 
 
 # ============================================================================

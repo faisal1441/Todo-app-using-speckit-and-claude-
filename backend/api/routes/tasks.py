@@ -17,9 +17,9 @@ from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select, func
 
-from ...core.models.task import Task
-from ...core.config import get_session
-from ...api.schemas.task_schema import (
+from core.models.task import Task
+from core.config import get_session
+from api.schemas.task_schema import (
     TaskCreate,
     TaskUpdate,
     TaskResponse,

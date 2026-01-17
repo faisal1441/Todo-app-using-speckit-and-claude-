@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 import asyncio
 
 from .routes import tasks
-from ..core.config import async_init_db
+from core.config import async_init_db
 
 # Create FastAPI app
 app = FastAPI(

@@ -7,7 +7,7 @@ Exports:
   - TaskSerializer: Serialization utilities
 """
 
-from backend.core.services.task_manager import TaskManager
-from backend.core.services.task_persistence import TaskFileManager, TaskSerializer
+from .task_manager import TaskManager
+from .task_persistence import TaskFileManager, TaskSerializer
 
 __all__ = ['TaskManager', 'TaskFileManager', 'TaskSerializer']
