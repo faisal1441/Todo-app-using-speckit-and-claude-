@@ -1,0 +1,17 @@
+# Ignore unnecessary files for Vercel deployment
+.git
+.github
+.claude
+.specify
+*.md
+tests/
+node_modules/
+.next/
+.env
+.env.local
+*.pyc
+__pycache__/
+.pytest_cache/
+venv/
+env/
+.DS_Store
