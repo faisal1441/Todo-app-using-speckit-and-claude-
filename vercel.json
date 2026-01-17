@@ -2,8 +2,28 @@
   "version": 2,
   "builds": [
     {
+      "src": "backend/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "pythonVersion": "3.11"
+      }
+    },
+    {
       "src": "nextjs-app/package.json",
       "use": "@vercel/next"
     }
-  ]
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/index.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "nextjs-app/$1"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_API_URL": "/api"
+  }
 }
