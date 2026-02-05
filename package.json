@@ -4,14 +4,16 @@
   "description": "Full-stack Todo Application with FastAPI backend and React frontend",
   "private": true,
   "scripts": {
-    "dev:backend": "cd backend && uvicorn api.main:app --reload --port 8000",
+    "dev:backend": "cd backend && python -m uvicorn api.main:app --reload --port 8000",
     "dev:frontend": "cd frontend && npm run dev",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:chat": "cd ai-chatbot && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:chat\"",
+    "dev:no-chat": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "build:backend": "echo 'Backend is Python, no build needed'",
     "build:frontend": "cd frontend && npm run build",
     "build": "npm run build:frontend",
     "preview": "cd frontend && npm run preview",
-    "install-all": "cd backend && pip install -r requirements.txt && cd ../frontend && npm install"
+    "install-all": "cd backend && pip install -r requirements.txt && cd ../frontend && npm install && cd ../ai-chatbot && npm install"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
