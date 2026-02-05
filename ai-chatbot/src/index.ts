@@ -46,6 +46,31 @@ async function main() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
+  // CORS middleware - allow requests from frontend
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:5174',
+    ];
+
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'production') {
+      res.header('Access-Control-Allow-Origin', origin || '*');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, X-User-ID, X-Session-ID');
+      res.header('Access-Control-Allow-Credentials', 'true');
+    }
+
+    if (req.method === 'OPTIONS') {
+      return res.sendStatus(200);
+    }
+
+    next();
+  });
+
   // Request logging in development
   if (NODE_ENV === 'development') {
     app.use((req, res, next) => {
