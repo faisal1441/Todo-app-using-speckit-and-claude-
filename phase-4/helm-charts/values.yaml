@@ -1,0 +1,159 @@
+# Default values for todo-chatbot Helm chart
+
+# Global settings
+global:
+  environment: production
+  domain: todoapp.local
+
+# Backend configuration
+backend:
+  replicaCount: 2
+  image:
+    repository: todoapp/backend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 8000
+    targetPort: 8000
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  env:
+    DATABASE_URL: "sqlite:///./test.db"
+    DEBUG: "false"
+
+# Frontend configuration
+frontend:
+  replicaCount: 2
+  image:
+    repository: todoapp/frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: NodePort
+    port: 80
+    targetPort: 80
+    nodePort: 30080  # Fixed port for easy access
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  env:
+    VITE_API_URL: "/api"
+    VITE_CHAT_API: "/chat"
+
+# Chatbot configuration
+chatbot:
+  replicaCount: 1
+  image:
+    repository: todoapp/chatbot
+    tag: latest
+    pullPolicy: IfNotPresent
+
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  env:
+    NODE_ENV: "production"
+    OPENAI_API_KEY: ""  # Set via secrets
+    OPENAI_MODEL: "gpt-3.5-turbo"
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: todoapp.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Persistent storage (optional)
+persistence:
+  enabled: false
+  storageClass: "standard"
+  size: 1Gi
+
+# Namespace
+namespace: default
+
+# Service Account
+serviceAccount:
+  create: true
+  name: todo-app
+
+# Auto-scaling
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80

@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-chatbot
+  labels:
+    {{- include "todo-chatbot.chatbot.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.chatbot.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "todo-chatbot.chatbot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "todo-chatbot.chatbot.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "todo-chatbot.serviceAccountName" . }}
+      {{- end }}
+      containers:
+      - name: chatbot
+        image: "{{ .Values.chatbot.image.repository }}:{{ .Values.chatbot.image.tag }}"
+        imagePullPolicy: {{ .Values.chatbot.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.chatbot.service.targetPort }}
+          protocol: TCP
+        env:
+        {{- range $key, $value := .Values.chatbot.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        {{- if .Values.chatbot.livenessProbe.enabled }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: {{ .Values.chatbot.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.chatbot.livenessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.chatbot.livenessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.chatbot.livenessProbe.failureThreshold }}
+        {{- end }}
+        {{- if .Values.chatbot.readinessProbe.enabled }}
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: {{ .Values.chatbot.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.chatbot.readinessProbe.periodSeconds }}
+          timeoutSeconds: {{ .Values.chatbot.readinessProbe.timeoutSeconds }}
+          failureThreshold: {{ .Values.chatbot.readinessProbe.failureThreshold }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.chatbot.resources | nindent 10 }}
+        {{- if .Values.persistence.enabled }}
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+        {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: {{ include "todo-chatbot.fullname" . }}-chatbot-data
+      {{- end }}

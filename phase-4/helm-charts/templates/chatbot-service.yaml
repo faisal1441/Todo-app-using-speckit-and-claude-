@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "todo-chatbot.fullname" . }}-chatbot
+  labels:
+    {{- include "todo-chatbot.chatbot.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.chatbot.service.type }}
+  ports:
+  - port: {{ .Values.chatbot.service.port }}
+    targetPort: http
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "todo-chatbot.chatbot.selectorLabels" . | nindent 4 }}
