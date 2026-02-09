@@ -1,9 +1,10 @@
-# Todo App - Full Stack Web Application
+# Todo App - Full Stack Web Application with AI Chatbot
 
-A modern, full-stack todo application with a FastAPI backend and React frontend. Manage your tasks efficiently with a clean, intuitive web interface. Deployed to Vercel for easy access anywhere.
+A modern, full-stack todo application with a FastAPI backend, React/Vite frontend, and AI-powered chatbot. Manage your tasks efficiently with a clean, intuitive web interface and intelligent task assistance.
 
 ## Features
 
+### Task Management
 - **Create Tasks**: Add new tasks with titles and optional descriptions
 - **View Tasks**: Display all tasks with status, creation date, and completion information
 - **Update Tasks**: Modify task titles and descriptions inline
@@ -12,31 +13,45 @@ A modern, full-stack todo application with a FastAPI backend and React frontend.
 - **Filter Tasks**: View all, pending, or completed tasks
 - **Statistics**: Track total, pending, and completed task counts
 - **Responsive Design**: Works on desktop, tablet, and mobile devices
-- **Data Persistence**: Tasks saved to JSON file (resets on Vercel cold start; migrate to database for production)
+
+### AI Chatbot
+- **Intelligent Assistant**: Get help with task management via AI chat
+- **Context-Aware**: Chatbot understands your tasks and provides relevant suggestions
+- **Multiple Sessions**: Maintain separate chat sessions for different topics
+- **Real-time Updates**: Live chat integration with the task management system
 
 ## Technology Stack
 
-### Backend
+### Task API (Backend)
 - **Framework**: FastAPI (Python)
 - **Server**: Uvicorn
-- **Validation**: Pydantic
-- **Persistence**: JSON file-based (with structured serialization)
+- **Validation**: Pydantic / SQLModel
+- **Persistence**: JSON file-based (development) or SQLite (production)
+- **CORS**: Enabled for cross-origin requests
+
+### Chat API
+- **Framework**: Express.js (Node.js/TypeScript)
+- **LLM**: OpenAI GPT-4
+- **Server**: Auto-reload development server
+- **Features**: Session management, message history, user isolation
 
 ### Frontend
 - **Library**: React 18
 - **Build Tool**: Vite
 - **HTTP Client**: Axios
 - **Styling**: Custom CSS with responsive design
+- **Components**: Task management UI + Chatbot widget
 
 ### Deployment
 - **Platform**: Vercel
 - **Configuration**: Monorepo with separate builds for backend and frontend
+- **Scale**: Serverless functions (automatic scaling)
 
 ## Project Structure
 
 ```
 todo-app/
-├── backend/                          # FastAPI backend
+├── backend/                          # FastAPI Task API
 │   ├── api/
 │   │   ├── main.py                  # FastAPI app entry point
 │   │   ├── routes/
@@ -54,20 +69,22 @@ todo-app/
 │   ├── requirements.txt
 │   └── vercel.json
 │
-├── frontend/                         # React frontend
+├── frontend/                         # React/Vite Frontend
 │   ├── src/
 │   │   ├── App.jsx                  # Main app component
 │   │   ├── main.jsx                 # React entry point
 │   │   ├── components/
-│   │   │   ├── TaskList.jsx
-│   │   │   ├── TaskItem.jsx
-│   │   │   ├── TaskForm.jsx
-│   │   │   ├── TaskFilter.jsx
-│   │   │   └── TaskStats.jsx
+│   │   │   ├── TaskList.jsx         # Task list view
+│   │   │   ├── TaskItem.jsx         # Individual task
+│   │   │   ├── TaskForm.jsx         # Create/edit form
+│   │   │   ├── TaskFilter.jsx       # Filter controls
+│   │   │   ├── TaskStats.jsx        # Statistics display
+│   │   │   └── ChatBot.jsx          # AI chatbot widget
 │   │   ├── services/
-│   │   │   └── api.js               # API client
+│   │   │   ├── api.js               # Task API client
+│   │   │   └── chatApi.js           # Chat API client
 │   │   ├── hooks/
-│   │   │   └── useTasks.js          # Custom hook
+│   │   │   └── useTasks.js          # Task management hook
 │   │   └── styles/
 │   │       └── App.css              # Global styles
 │   ├── index.html
@@ -76,8 +93,25 @@ todo-app/
 │   ├── .env.example
 │   └── vercel.json
 │
+├── ai-chatbot/                       # Express.js Chat API
+│   ├── src/
+│   │   ├── index.ts                 # Server entry point
+│   │   ├── routes/
+│   │   │   ├── chat.ts              # Chat endpoints
+│   │   │   └── health.ts            # Health check
+│   │   ├── services/
+│   │   │   ├── chatService.ts       # OpenAI integration
+│   │   │   └── sessionService.ts    # Session management
+│   │   └── middleware/
+│   │       └── cors.ts              # CORS configuration
+│   ├── dist/                        # Compiled JavaScript
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── .env.example
+│
 ├── vercel.json                       # Root Vercel config
-├── package.json                      # Root package.json
+├── package.json                      # Root package.json with scripts
+├── STARTUP_GUIDE.md                  # Quick start guide (this file replaces others)
 └── README.md                         # This file
 ```
 
@@ -85,11 +119,12 @@ todo-app/
 
 ### Prerequisites
 
-- **Node.js** 16+ (for frontend)
+- **Node.js** 16+ (for frontend and chat API)
 - **Python** 3.9+ (for backend)
-- **npm** or **yarn** (for frontend package management)
+- **npm** or **yarn** (for package management)
+- **OpenAI API Key** (for chat functionality) - [Get one here](https://platform.openai.com/api-keys)
 
-### Local Development Setup
+### Installation
 
 1. **Clone the repository**:
 ```bash
@@ -97,50 +132,85 @@ git clone <repository-url>
 cd todoapp
 ```
 
-2. **Install dependencies**:
+2. **Install all dependencies**:
 ```bash
 npm run install-all
 ```
 
-This will:
-- Install Python dependencies in `backend/requirements.txt`
-- Install Node dependencies in `frontend/package.json`
+This will install:
+- Python dependencies: `backend/requirements.txt`
+- Frontend dependencies: `frontend/package.json`
+- Chat API dependencies: `ai-chatbot/package.json`
 
-3. **Run locally**:
+3. **Set up environment variables**:
 
-**Option A: Run frontend and backend separately**
-
-Terminal 1 - Start backend:
+**Backend** (optional):
 ```bash
-cd backend
-uvicorn api.main:app --reload --port 8000
+# backend/.env (optional, uses SQLite by default)
+DATABASE_URL=sqlite:///tasks.db
 ```
 
-Terminal 2 - Start frontend:
+**Chat API** (required):
 ```bash
-cd frontend
-npm run dev
+# ai-chatbot/.env
+OPENAI_API_KEY=sk-your-api-key-here
+OPENAI_MODEL=gpt-4
+PORT=3000
 ```
 
-The app will be available at `http://localhost:5173`
-
-**Option B: Run both with concurrently**
-
+**Frontend**:
 ```bash
-npm run dev
-```
-
-### Environment Variables
-
-Create `frontend/.env` based on `.env.example`:
-
-```
+# frontend/.env.local
 VITE_API_URL=http://localhost:8000/api
+VITE_CHAT_API=http://localhost:3000
 ```
 
-For Vercel deployment, set environment variables in the Vercel dashboard:
+### Running the Application
+
+**Option 1: Run all servers together (Recommended)**
+```bash
+npm run dev
 ```
-VITE_API_URL=https://your-domain.vercel.app/api
+
+Starts:
+- Backend Task API: `http://localhost:8000/api`
+- Chat API: `http://localhost:3000`
+- Frontend: `http://localhost:5173`
+
+**Option 2: Run without Chat API**
+```bash
+npm run dev:no-chat
+```
+
+Starts:
+- Backend Task API: `http://localhost:8000/api`
+- Frontend: `http://localhost:5173`
+
+**Option 3: Run individual servers**
+```bash
+# Terminal 1
+npm run dev:backend
+
+# Terminal 2
+npm run dev:frontend
+
+# Terminal 3
+npm run dev:chat
+```
+
+### Verify Everything is Working
+
+```bash
+# Test Task API
+curl http://localhost:8000/api/tasks
+
+# Test Chat API
+curl -X POST http://localhost:3000/chat/sessions \
+  -H "X-User-ID: test-user" \
+  -H "Content-Type: application/json"
+
+# Open frontend in browser
+# http://localhost:5173
 ```
 
 ## API Documentation
@@ -232,6 +302,64 @@ Response:
 #### Interactive API Documentation
 Visit `http://localhost:8000/docs` for interactive API documentation (Swagger UI)
 
+### Chat API Endpoints
+
+Base URL: `http://localhost:3000`
+
+#### Create Chat Session
+```
+POST /chat/sessions
+Headers: X-User-ID: <user-id>
+Content-Type: application/json
+
+Response: { sessionId: string, userId: string, createdAt: timestamp }
+```
+
+#### Send Message
+```
+POST /chat/send
+Headers: X-User-ID: <user-id>
+Content-Type: application/json
+
+{
+  "sessionId": "session-id",
+  "message": "Help me organize my tasks"
+}
+
+Response: { sessionId: string, message: string, response: string, timestamp: timestamp }
+```
+
+#### Get Session History
+```
+GET /chat/sessions/:sessionId
+Headers: X-User-ID: <user-id>
+
+Response: { sessionId: string, messages: [...], createdAt: timestamp }
+```
+
+#### List User Sessions
+```
+GET /chat/sessions
+Headers: X-User-ID: <user-id>
+
+Response: [{ sessionId: string, createdAt: timestamp }, ...]
+```
+
+#### Delete Session
+```
+DELETE /chat/sessions/:sessionId
+Headers: X-User-ID: <user-id>
+
+Response: 204 No Content
+```
+
+#### Health Check
+```
+GET /health
+
+Response: { status: "ok", uptime: number }
+```
+
 ## Building for Production
 
 ### Build Frontend
@@ -306,10 +434,17 @@ pip install -r requirements.txt
 
 **Port 8000 already in use**:
 ```bash
-# Use a different port
-uvicorn api.main:app --reload --port 8001
-# Update frontend API URL to match
+# Find and kill process (Windows)
+netstat -ano | findstr :8000
+taskkill /PID <PID> /F
+
+# Or use a different port
+python -m uvicorn api.main:app --reload --port 8001
 ```
+
+**Database errors**:
+- Ensure `backend/api/` directory exists
+- Check file permissions on `/tmp/` (Linux/Mac) or temp folder (Windows)
 
 ### Frontend Issues
 
@@ -322,8 +457,42 @@ npm install
 
 **API connection errors**:
 - Check that backend is running on `http://localhost:8000`
-- Check `VITE_API_URL` in `.env`
+- Check `VITE_API_URL` in `frontend/.env.local`
 - Check browser console for CORS errors
+
+**Chatbot not loading**:
+- Verify `VITE_CHAT_API` is set to `http://localhost:3000`
+- Check that Chat API server is running
+- Check browser console for errors
+
+### Chat API Issues
+
+**Module not found errors**:
+```bash
+cd ai-chatbot
+npm install
+npm run build
+```
+
+**OpenAI API errors**:
+- Verify `OPENAI_API_KEY` is set in `ai-chatbot/.env`
+- Check API key is valid on [OpenAI dashboard](https://platform.openai.com/account/api-keys)
+- Verify API quota is available
+
+**Port 3000 already in use**:
+```bash
+# Find and kill process (Windows)
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+
+# Or change port in ai-chatbot/.env
+echo "PORT=3001" >> ai-chatbot/.env
+```
+
+**CORS errors when frontend calls Chat API**:
+- Verify CORS is enabled in Chat API
+- Check `VITE_CHAT_API` environment variable in frontend
+- Ensure Chat API is running
 
 ### Vercel Deployment
 
@@ -465,9 +634,38 @@ For issues, questions, or suggestions:
 3. Check Vercel deployment logs
 4. Open an issue on GitHub
 
-## Changelog
+## Project Roadmap
 
-### Version 2.0.0 (Current - Web Version)
+### Completed ✅
+- Full-stack web application (React/FastAPI)
+- Task CRUD operations with persistence
+- Responsive UI for all devices
+- Vercel deployment support
+- AI-powered chatbot integration
+- Chat API with session management
+- CORS support for cross-origin requests
+
+### Planned Features 🔜
+- **Database Integration**: Migrate from JSON to PostgreSQL/Supabase
+- **User Authentication**: Multi-user support with JWT
+- **Task Organization**: Categories, tags, and priority levels
+- **Advanced Features**: Due dates, reminders, recurring tasks
+- **Real-time Updates**: WebSocket support for live sync
+- **Dark Mode**: Automatic theme switching
+- **Mobile App**: React Native version
+
+## Version History
+
+### Version 3.0.0 (Current - AI Integration)
+- **NEW**: AI-powered chatbot with OpenAI integration
+- **NEW**: Chat API with session management
+- **NEW**: Multi-session chat support with user isolation
+- **NEW**: Real-time chatbot widget in frontend
+- **IMPROVED**: Enhanced project structure for multiple services
+- **IMPROVED**: Docker and Railway deployment configs
+- **IMPROVED**: Comprehensive troubleshooting guides
+
+### Version 2.0.0 (Web Version)
 - **NEW**: Full-stack web application with React frontend
 - **NEW**: FastAPI backend with RESTful API
 - **NEW**: Responsive web UI with modern styling
@@ -475,16 +673,10 @@ For issues, questions, or suggestions:
 - **IMPROVED**: Better data validation with Pydantic
 - **IMPROVED**: Structured JSON file persistence
 - **IMPROVED**: API documentation with Swagger UI
-- Backward compatible: existing CLI still available in `src/cli/`
 
-### Version 1.1.0
-- Added file persistence with JSON storage
-- 86 new tests for persistence layer
-- Error recovery with corrupt file backup
-
-### Version 1.0.0
-- Initial release with CLI interface
-- In-memory task storage
+### Version 1.0.0 (CLI Version)
+- Initial release with command-line interface
+- In-memory task storage with file persistence
 - 139 comprehensive tests
 
 ---
