@@ -6,7 +6,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
+# Install all dependencies (including dev for build)
 RUN npm ci
 
 # Copy source code
@@ -20,22 +20,27 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Install only production dependencies
+# Set environment
+ENV NODE_ENV=production
+
+# Copy package files
 COPY package*.json ./
-RUN npm ci --only=production
+
+# Install only production dependencies
+RUN npm ci --omit=dev
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist
 
 # Create data directory for persistence
-RUN mkdir -p ./data
+RUN mkdir -p ./data && chmod 755 ./data
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000) + '/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000) + '/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
 
 # Expose port
-EXPOSE ${PORT:-3000}
+EXPOSE 3000
 
 # Start the application
 CMD ["node", "dist/index.js"]
